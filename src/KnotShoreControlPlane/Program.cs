@@ -1,4 +1,10 @@
+using KnotShoreControlPlane.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<ControlPlaneDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("ControlPlane")));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
