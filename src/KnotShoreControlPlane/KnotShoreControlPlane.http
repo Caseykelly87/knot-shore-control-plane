@@ -1,0 +1,6 @@
+@KnotShoreControlPlane_HostAddress = http://localhost:5177
+
+GET {{KnotShoreControlPlane_HostAddress}}/health
+Accept: application/json
+
+###
