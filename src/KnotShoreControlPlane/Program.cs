@@ -67,6 +67,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapAuthEndpoints();
 
 app.Run();
 
