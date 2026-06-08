@@ -7,8 +7,8 @@ Generated sales data is data-plane volume and is never stored here; this service
 holds intent only.
 
 Built on ASP.NET Core (.NET 8) with EF Core and PostgreSQL. ASP.NET Identity backs
-user registration and login, and the service issues JWT bearer tokens. Scenario
-endpoints are not yet implemented.
+user registration and login, the service issues JWT bearer tokens, and scenario
+definitions are managed through an authenticated, owner-scoped CRUD API.
 
 ## Prerequisites
 
@@ -77,6 +77,29 @@ The service uses ASP.NET Identity for user accounts and issues JWT bearer tokens
 
 Send the token as `Authorization: Bearer <accessToken>` on requests to protected
 endpoints. `GET /health` is unauthenticated.
+
+## Scenarios
+
+The `/scenarios` endpoints manage scenario definitions. All require a valid bearer
+token and are scoped to the caller: a scenario belongs to the user who created it,
+and a user only ever sees or modifies their own.
+
+- `POST /scenarios` — create. The body carries the scenario fields; ownership, id,
+  and timestamps are set by the service and are not accepted from the body. Returns
+  `201` with the created scenario.
+- `GET /scenarios` — list the caller's scenarios, newest first. Paginated with
+  `page` (default 1) and `pageSize` (default 20, maximum 100; larger values are
+  clamped). The response carries `items` plus `page`, `pageSize`, `totalCount`, and
+  `totalPages`.
+- `GET /scenarios/{id}` — get one the caller owns.
+- `PUT /scenarios/{id}` — full update of one the caller owns; ownership and id are
+  preserved.
+- `DELETE /scenarios/{id}` — delete one the caller owns; returns `204`.
+
+A scenario that does not exist, or belongs to another user, returns `404` on get,
+update, and delete. Invalid input (for example an end date before the start date, a
+non-positive store count, or a probability outside `[0, 1]`) returns `400` with
+per-field messages.
 
 ## Tests
 

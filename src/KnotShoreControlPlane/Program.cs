@@ -2,6 +2,7 @@ using System.Text;
 using KnotShoreControlPlane.Data;
 using KnotShoreControlPlane.Domain;
 using KnotShoreControlPlane.Features.Auth;
+using KnotShoreControlPlane.Features.Scenarios;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -68,6 +69,7 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapAuthEndpoints();
+app.MapScenarioEndpoints();
 
 app.Run();
 
