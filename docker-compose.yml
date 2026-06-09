@@ -1,0 +1,26 @@
+# Local development database for the control plane. Brings up an empty
+# PostgreSQL server; the schema is created by the EF Core migration
+# (dotnet ef database update), not by this file. Credentials are dev-only
+# placeholders, not secrets.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: knotshore_controlplane
+      POSTGRES_USER: knotshore
+      POSTGRES_PASSWORD: knotshore_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - control-plane-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U knotshore -d knotshore_controlplane"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  control-plane-db-data:
