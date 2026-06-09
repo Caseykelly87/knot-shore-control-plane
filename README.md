@@ -13,16 +13,19 @@ definitions are managed through an authenticated, owner-scoped CRUD API.
 ## Prerequisites
 
 - .NET 8 SDK
-- PostgreSQL (a reachable instance for running migrations and the service)
+- Docker (Engine and Compose) — the local PostgreSQL database is provided by
+  `docker-compose.yml`. Any other reachable PostgreSQL instance works as well.
 
 ## Configuration
 
 The PostgreSQL connection string is read from configuration under
 `ConnectionStrings:ControlPlane`. `appsettings.json` carries a non-secret
-placeholder; supply the real value at run time via the environment variable:
+placeholder; supply the real value at run time via the environment variable.
+The example below matches the dev database from `docker-compose.yml`; override
+it for any other instance:
 
 ```
-ConnectionStrings__ControlPlane=Host=...;Port=5432;Database=...;Username=...;Password=...
+ConnectionStrings__ControlPlane=Host=localhost;Port=5432;Database=knotshore_controlplane;Username=knotshore;Password=knotshore_dev
 ```
 
 JWT bearer authentication is configured under the `Jwt` section. The issuer and
@@ -42,25 +45,47 @@ No credentials are committed. Use environment variables or
 [user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) for
 local development.
 
-## Database migrations
+## Local development
 
-The EF Core CLI is pinned as a local tool. Restore it once, then apply
-migrations against the database named in the connection string:
+1. Start the database. This brings up an empty PostgreSQL server:
 
-```
-dotnet tool restore
-dotnet ef database update --project src/KnotShoreControlPlane
-```
+   ```
+   docker compose up -d
+   ```
 
-This creates the ASP.NET Identity tables and the `Scenarios` table.
+2. Apply the migration to create the schema. The EF Core CLI is pinned as a
+   local tool:
 
-## Running the service
+   ```
+   dotnet tool restore
+   dotnet ef database update --project src/KnotShoreControlPlane
+   ```
 
-```
-dotnet run --project src/KnotShoreControlPlane
-```
+   This creates the ASP.NET Identity tables and the `Scenarios` table. The
+   schema comes from the migration, not from the compose file — there is no
+   init script, so the container starts empty.
 
-The service exposes `GET /health`, which returns `200 OK` with `{"status":"ok"}`.
+3. Set the JWT signing key and run the service:
+
+   ```
+   Jwt__SigningKey=<a long random secret, at least 32 bytes>
+   dotnet run --project src/KnotShoreControlPlane
+   ```
+
+   The service exposes `GET /health`, which returns `200 OK` with
+   `{"status":"ok"}`.
+
+The dev credentials in `docker-compose.yml` (database `knotshore_controlplane`,
+user `knotshore`, password `knotshore_dev`) match the example connection string
+above and are local-dev placeholders, not secrets.
+
+`docker compose down` stops the database; data persists in the named volume
+`control-plane-db-data`. `docker compose down -v` also removes the volume for a
+clean reset.
+
+If host port 5432 is already in use, change the host side of the port mapping in
+`docker-compose.yml` (for example `5433:5432`) and update `Port=` in the
+connection string to match.
 
 ## Authentication
 
